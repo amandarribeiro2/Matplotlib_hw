@@ -1,1910 +1,1483 @@
-{
- "cells": [
-  {
-   "cell_type": "code",
-   "execution_count": 6,
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "#Import numpy for calculations and matplolib for charting\n",
-    "import matplotlib.pyplot as plt\n",
-    "import numpy as np\n",
-    "import pandas as pd\n",
-    "import random"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 7,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/html": [
-       "<div>\n",
-       "<style scoped>\n",
-       "    .dataframe tbody tr th:only-of-type {\n",
-       "        vertical-align: middle;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe tbody tr th {\n",
-       "        vertical-align: top;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe thead th {\n",
-       "        text-align: right;\n",
-       "    }\n",
-       "</style>\n",
-       "<table border=\"1\" class=\"dataframe\">\n",
-       "  <thead>\n",
-       "    <tr style=\"text-align: right;\">\n",
-       "      <th></th>\n",
-       "      <th>Mouse ID</th>\n",
-       "      <th>Timepoint</th>\n",
-       "      <th>Tumor Volume (mm3)</th>\n",
-       "      <th>Metastatic Sites</th>\n",
-       "      <th>Drug</th>\n",
-       "    </tr>\n",
-       "  </thead>\n",
-       "  <tbody>\n",
-       "    <tr>\n",
-       "      <th>0</th>\n",
-       "      <td>b128</td>\n",
-       "      <td>0</td>\n",
-       "      <td>45.000000</td>\n",
-       "      <td>0</td>\n",
-       "      <td>Capomulin</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>1</th>\n",
-       "      <td>b128</td>\n",
-       "      <td>5</td>\n",
-       "      <td>45.651331</td>\n",
-       "      <td>0</td>\n",
-       "      <td>Capomulin</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>2</th>\n",
-       "      <td>b128</td>\n",
-       "      <td>10</td>\n",
-       "      <td>43.270852</td>\n",
-       "      <td>0</td>\n",
-       "      <td>Capomulin</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>3</th>\n",
-       "      <td>b128</td>\n",
-       "      <td>15</td>\n",
-       "      <td>43.784893</td>\n",
-       "      <td>0</td>\n",
-       "      <td>Capomulin</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>4</th>\n",
-       "      <td>b128</td>\n",
-       "      <td>20</td>\n",
-       "      <td>42.731552</td>\n",
-       "      <td>0</td>\n",
-       "      <td>Capomulin</td>\n",
-       "    </tr>\n",
-       "  </tbody>\n",
-       "</table>\n",
-       "</div>"
-      ],
-      "text/plain": [
-       "  Mouse ID  Timepoint  Tumor Volume (mm3)  Metastatic Sites       Drug\n",
-       "0     b128          0           45.000000                 0  Capomulin\n",
-       "1     b128          5           45.651331                 0  Capomulin\n",
-       "2     b128         10           43.270852                 0  Capomulin\n",
-       "3     b128         15           43.784893                 0  Capomulin\n",
-       "4     b128         20           42.731552                 0  Capomulin"
-      ]
-     },
-     "execution_count": 7,
-     "metadata": {},
-     "output_type": "execute_result"
+python
+#Import numpy for calculations and matplolib for charting
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import random
+```
+
+
+```python
+# Import our data into pandas from CSV
+clinical_trial = 'clinicaltrial_data.csv'
+clinical_trial_df = pd.read_csv(clinical_trial)
+clinical_trial_df
+
+mouse_drug = 'mouse_drug_data.csv'
+mouse_drug_df = pd.read_csv(mouse_drug)
+mouse_drug_df
+
+combined_df = pd.merge(clinical_trial_df, mouse_drug_df, on = "Mouse ID")
+combined_df.head()
+
+
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
     }
-   ],
-   "source": [
-    "# Import our data into pandas from CSV\n",
-    "clinical_trial = 'clinicaltrial_data.csv'\n",
-    "clinical_trial_df = pd.read_csv(clinical_trial)\n",
-    "clinical_trial_df\n",
-    "\n",
-    "mouse_drug = 'mouse_drug_data.csv'\n",
-    "mouse_drug_df = pd.read_csv(mouse_drug)\n",
-    "mouse_drug_df\n",
-    "\n",
-    "combined_df = pd.merge(clinical_trial_df, mouse_drug_df, on = \"Mouse ID\")\n",
-    "combined_df.head()\n",
-    "\n"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "# Tumor Response to Treatments"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 8,
-   "metadata": {
-    "scrolled": true
-   },
-   "outputs": [],
-   "source": [
-    "# tumor_volume_mean = combined_df.groupby([\"Drug\", \"Timepoint\"]).mean()[\"Tumor Volume (mm3)\"]\n",
-    "# tumor_volume_mean = pd.DataFrame(tumor_volume_mean)\n",
-    "# tumor_volume_mean"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 9,
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "# tumor_volume_sem = combined_df.groupby([\"Drug\", \"Timepoint\"]).sem()[\"Tumor Volume (mm3)\"]\n",
-    "# tumor_volume_sem = pd.DataFrame(tumor_volume_sem)\n",
-    "# tumor_volume_sem.head()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 10,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/html": [
-       "<div>\n",
-       "<style scoped>\n",
-       "    .dataframe tbody tr th:only-of-type {\n",
-       "        vertical-align: middle;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe tbody tr th {\n",
-       "        vertical-align: top;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe thead th {\n",
-       "        text-align: right;\n",
-       "    }\n",
-       "</style>\n",
-       "<table border=\"1\" class=\"dataframe\">\n",
-       "  <thead>\n",
-       "    <tr style=\"text-align: right;\">\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th>Tumor Volume (mm3)</th>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>Drug</th>\n",
-       "      <th>Timepoint</th>\n",
-       "      <th></th>\n",
-       "    </tr>\n",
-       "  </thead>\n",
-       "  <tbody>\n",
-       "    <tr>\n",
-       "      <th rowspan=\"10\" valign=\"top\">Capomulin</th>\n",
-       "      <th>0</th>\n",
-       "      <td>45.000000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>44.266086</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>43.084291</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>42.064317</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>40.716325</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>25</th>\n",
-       "      <td>39.939528</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>30</th>\n",
-       "      <td>38.769339</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>35</th>\n",
-       "      <td>37.816839</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>40</th>\n",
-       "      <td>36.958001</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>45</th>\n",
-       "      <td>36.236114</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th rowspan=\"10\" valign=\"top\">Ceftamin</th>\n",
-       "      <th>0</th>\n",
-       "      <td>45.000000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>46.503051</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>48.285125</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>50.094055</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>52.157049</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>25</th>\n",
-       "      <td>54.287674</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>30</th>\n",
-       "      <td>56.769517</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>35</th>\n",
-       "      <td>58.827548</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>40</th>\n",
-       "      <td>61.467895</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>45</th>\n",
-       "      <td>64.132421</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th rowspan=\"10\" valign=\"top\">Infubinol</th>\n",
-       "      <th>0</th>\n",
-       "      <td>45.000000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>47.062001</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>49.403909</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>51.296397</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>53.197691</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>25</th>\n",
-       "      <td>55.715252</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>30</th>\n",
-       "      <td>58.299397</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>35</th>\n",
-       "      <td>60.742461</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>40</th>\n",
-       "      <td>63.162824</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>45</th>\n",
-       "      <td>65.755562</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>...</th>\n",
-       "      <th>...</th>\n",
-       "      <td>...</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th rowspan=\"10\" valign=\"top\">Ramicane</th>\n",
-       "      <th>0</th>\n",
-       "      <td>45.000000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>43.944859</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>42.531957</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>41.495061</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>40.238325</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>25</th>\n",
-       "      <td>38.974300</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>30</th>\n",
-       "      <td>38.703137</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>35</th>\n",
-       "      <td>37.451996</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>40</th>\n",
-       "      <td>36.574081</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>45</th>\n",
-       "      <td>34.955595</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th rowspan=\"10\" valign=\"top\">Stelasyn</th>\n",
-       "      <th>0</th>\n",
-       "      <td>45.000000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>47.527452</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>49.463844</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>51.529409</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>54.067395</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>25</th>\n",
-       "      <td>56.166123</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>30</th>\n",
-       "      <td>59.826738</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>35</th>\n",
-       "      <td>62.440699</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>40</th>\n",
-       "      <td>65.356386</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>45</th>\n",
-       "      <td>68.438310</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th rowspan=\"10\" valign=\"top\">Zoniferol</th>\n",
-       "      <th>0</th>\n",
-       "      <td>45.000000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>46.851818</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>48.689881</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>50.779059</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>53.170334</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>25</th>\n",
-       "      <td>55.432935</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>30</th>\n",
-       "      <td>57.713531</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>35</th>\n",
-       "      <td>60.089372</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>40</th>\n",
-       "      <td>62.916692</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>45</th>\n",
-       "      <td>65.960888</td>\n",
-       "    </tr>\n",
-       "  </tbody>\n",
-       "</table>\n",
-       "<p>100 rows × 1 columns</p>\n",
-       "</div>"
-      ],
-      "text/plain": [
-       "                     Tumor Volume (mm3)\n",
-       "Drug      Timepoint                    \n",
-       "Capomulin 0                   45.000000\n",
-       "          5                   44.266086\n",
-       "          10                  43.084291\n",
-       "          15                  42.064317\n",
-       "          20                  40.716325\n",
-       "          25                  39.939528\n",
-       "          30                  38.769339\n",
-       "          35                  37.816839\n",
-       "          40                  36.958001\n",
-       "          45                  36.236114\n",
-       "Ceftamin  0                   45.000000\n",
-       "          5                   46.503051\n",
-       "          10                  48.285125\n",
-       "          15                  50.094055\n",
-       "          20                  52.157049\n",
-       "          25                  54.287674\n",
-       "          30                  56.769517\n",
-       "          35                  58.827548\n",
-       "          40                  61.467895\n",
-       "          45                  64.132421\n",
-       "Infubinol 0                   45.000000\n",
-       "          5                   47.062001\n",
-       "          10                  49.403909\n",
-       "          15                  51.296397\n",
-       "          20                  53.197691\n",
-       "          25                  55.715252\n",
-       "          30                  58.299397\n",
-       "          35                  60.742461\n",
-       "          40                  63.162824\n",
-       "          45                  65.755562\n",
-       "...                                 ...\n",
-       "Ramicane  0                   45.000000\n",
-       "          5                   43.944859\n",
-       "          10                  42.531957\n",
-       "          15                  41.495061\n",
-       "          20                  40.238325\n",
-       "          25                  38.974300\n",
-       "          30                  38.703137\n",
-       "          35                  37.451996\n",
-       "          40                  36.574081\n",
-       "          45                  34.955595\n",
-       "Stelasyn  0                   45.000000\n",
-       "          5                   47.527452\n",
-       "          10                  49.463844\n",
-       "          15                  51.529409\n",
-       "          20                  54.067395\n",
-       "          25                  56.166123\n",
-       "          30                  59.826738\n",
-       "          35                  62.440699\n",
-       "          40                  65.356386\n",
-       "          45                  68.438310\n",
-       "Zoniferol 0                   45.000000\n",
-       "          5                   46.851818\n",
-       "          10                  48.689881\n",
-       "          15                  50.779059\n",
-       "          20                  53.170334\n",
-       "          25                  55.432935\n",
-       "          30                  57.713531\n",
-       "          35                  60.089372\n",
-       "          40                  62.916692\n",
-       "          45                  65.960888\n",
-       "\n",
-       "[100 rows x 1 columns]"
-      ]
-     },
-     "execution_count": 10,
-     "metadata": {},
-     "output_type": "execute_result"
+
+    .dataframe tbody tr th {
+        vertical-align: top;
     }
-   ],
-   "source": [
-    "Tumor_response_df = combined_df[[\"Drug\", \"Timepoint\",\"Tumor Volume (mm3)\"]]\n",
-    "Tumor_response_df = Tumor_response_df.groupby([\"Drug\", \"Timepoint\"])[\"Tumor Volume (mm3)\"].mean()\n",
-    "Tumor_response_df = pd.DataFrame(Tumor_response_df)\n",
-    "Tumor_response_df\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 11,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/html": [
-       "<div>\n",
-       "<style scoped>\n",
-       "    .dataframe tbody tr th:only-of-type {\n",
-       "        vertical-align: middle;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe tbody tr th {\n",
-       "        vertical-align: top;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe thead th {\n",
-       "        text-align: right;\n",
-       "    }\n",
-       "</style>\n",
-       "<table border=\"1\" class=\"dataframe\">\n",
-       "  <thead>\n",
-       "    <tr style=\"text-align: right;\">\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th>Tumor Volume (mm3)</th>\n",
-       "      <th>Volume SEM</th>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>Drug</th>\n",
-       "      <th>Timepoint</th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "    </tr>\n",
-       "  </thead>\n",
-       "  <tbody>\n",
-       "    <tr>\n",
-       "      <th rowspan=\"5\" valign=\"top\">Capomulin</th>\n",
-       "      <th>0</th>\n",
-       "      <td>45.000000</td>\n",
-       "      <td>0.898067</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>44.266086</td>\n",
-       "      <td>0.898067</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>43.084291</td>\n",
-       "      <td>0.898067</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>42.064317</td>\n",
-       "      <td>0.898067</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>40.716325</td>\n",
-       "      <td>0.898067</td>\n",
-       "    </tr>\n",
-       "  </tbody>\n",
-       "</table>\n",
-       "</div>"
-      ],
-      "text/plain": [
-       "                     Tumor Volume (mm3)  Volume SEM\n",
-       "Drug      Timepoint                                \n",
-       "Capomulin 0                   45.000000    0.898067\n",
-       "          5                   44.266086    0.898067\n",
-       "          10                  43.084291    0.898067\n",
-       "          15                  42.064317    0.898067\n",
-       "          20                  40.716325    0.898067"
-      ]
-     },
-     "execution_count": 11,
-     "metadata": {},
-     "output_type": "execute_result"
+
+    .dataframe thead th {
+        text-align: right;
     }
-   ],
-   "source": [
-    "Tumor_response_df[\"Volume SEM\"] = Tumor_response_df[\"Tumor Volume (mm3)\"].sem()\n",
-    "\n",
-    "Tumor_response_df = pd.DataFrame(Tumor_response_df)\n",
-    "Tumor_response_df.head()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 12,
-   "metadata": {
-    "scrolled": true
-   },
-   "outputs": [
-    {
-     "data": {
-      "text/html": [
-       "<div>\n",
-       "<style scoped>\n",
-       "    .dataframe tbody tr th:only-of-type {\n",
-       "        vertical-align: middle;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe tbody tr th {\n",
-       "        vertical-align: top;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe thead th {\n",
-       "        text-align: right;\n",
-       "    }\n",
-       "</style>\n",
-       "<table border=\"1\" class=\"dataframe\">\n",
-       "  <thead>\n",
-       "    <tr style=\"text-align: right;\">\n",
-       "      <th>Drug</th>\n",
-       "      <th>Capomulin</th>\n",
-       "      <th>Ceftamin</th>\n",
-       "      <th>Infubinol</th>\n",
-       "      <th>Ketapril</th>\n",
-       "      <th>Naftisol</th>\n",
-       "      <th>Placebo</th>\n",
-       "      <th>Propriva</th>\n",
-       "      <th>Ramicane</th>\n",
-       "      <th>Stelasyn</th>\n",
-       "      <th>Zoniferol</th>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>Timepoint</th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "    </tr>\n",
-       "  </thead>\n",
-       "  <tbody>\n",
-       "    <tr>\n",
-       "      <th>0</th>\n",
-       "      <td>45.000000</td>\n",
-       "      <td>45.000000</td>\n",
-       "      <td>45.000000</td>\n",
-       "      <td>45.000000</td>\n",
-       "      <td>45.000000</td>\n",
-       "      <td>45.000000</td>\n",
-       "      <td>45.000000</td>\n",
-       "      <td>45.000000</td>\n",
-       "      <td>45.000000</td>\n",
-       "      <td>45.000000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>44.266086</td>\n",
-       "      <td>46.503051</td>\n",
-       "      <td>47.062001</td>\n",
-       "      <td>47.389175</td>\n",
-       "      <td>46.796098</td>\n",
-       "      <td>47.125589</td>\n",
-       "      <td>47.248967</td>\n",
-       "      <td>43.944859</td>\n",
-       "      <td>47.527452</td>\n",
-       "      <td>46.851818</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>43.084291</td>\n",
-       "      <td>48.285125</td>\n",
-       "      <td>49.403909</td>\n",
-       "      <td>49.582269</td>\n",
-       "      <td>48.694210</td>\n",
-       "      <td>49.423329</td>\n",
-       "      <td>49.101541</td>\n",
-       "      <td>42.531957</td>\n",
-       "      <td>49.463844</td>\n",
-       "      <td>48.689881</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>42.064317</td>\n",
-       "      <td>50.094055</td>\n",
-       "      <td>51.296397</td>\n",
-       "      <td>52.399974</td>\n",
-       "      <td>50.933018</td>\n",
-       "      <td>51.359742</td>\n",
-       "      <td>51.067318</td>\n",
-       "      <td>41.495061</td>\n",
-       "      <td>51.529409</td>\n",
-       "      <td>50.779059</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>40.716325</td>\n",
-       "      <td>52.157049</td>\n",
-       "      <td>53.197691</td>\n",
-       "      <td>54.920935</td>\n",
-       "      <td>53.644087</td>\n",
-       "      <td>54.364417</td>\n",
-       "      <td>53.346737</td>\n",
-       "      <td>40.238325</td>\n",
-       "      <td>54.067395</td>\n",
-       "      <td>53.170334</td>\n",
-       "    </tr>\n",
-       "  </tbody>\n",
-       "</table>\n",
-       "</div>"
-      ],
-      "text/plain": [
-       "Drug       Capomulin   Ceftamin  Infubinol   Ketapril   Naftisol    Placebo  \\\n",
-       "Timepoint                                                                     \n",
-       "0          45.000000  45.000000  45.000000  45.000000  45.000000  45.000000   \n",
-       "5          44.266086  46.503051  47.062001  47.389175  46.796098  47.125589   \n",
-       "10         43.084291  48.285125  49.403909  49.582269  48.694210  49.423329   \n",
-       "15         42.064317  50.094055  51.296397  52.399974  50.933018  51.359742   \n",
-       "20         40.716325  52.157049  53.197691  54.920935  53.644087  54.364417   \n",
-       "\n",
-       "Drug        Propriva   Ramicane   Stelasyn  Zoniferol  \n",
-       "Timepoint                                              \n",
-       "0          45.000000  45.000000  45.000000  45.000000  \n",
-       "5          47.248967  43.944859  47.527452  46.851818  \n",
-       "10         49.101541  42.531957  49.463844  48.689881  \n",
-       "15         51.067318  41.495061  51.529409  50.779059  \n",
-       "20         53.346737  40.238325  54.067395  53.170334  "
-      ]
-     },
-     "execution_count": 12,
-     "metadata": {},
-     "output_type": "execute_result"
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Mouse ID</th>
+      <th>Timepoint</th>
+      <th>Tumor Volume (mm3)</th>
+      <th>Metastatic Sites</th>
+      <th>Drug</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>b128</td>
+      <td>0</td>
+      <td>45.000000</td>
+      <td>0</td>
+      <td>Capomulin</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>b128</td>
+      <td>5</td>
+      <td>45.651331</td>
+      <td>0</td>
+      <td>Capomulin</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>b128</td>
+      <td>10</td>
+      <td>43.270852</td>
+      <td>0</td>
+      <td>Capomulin</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>b128</td>
+      <td>15</td>
+      <td>43.784893</td>
+      <td>0</td>
+      <td>Capomulin</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>b128</td>
+      <td>20</td>
+      <td>42.731552</td>
+      <td>0</td>
+      <td>Capomulin</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+# Tumor Response to Treatments
+
+
+```python
+# tumor_volume_mean = combined_df.groupby(["Drug", "Timepoint"]).mean()["Tumor Volume (mm3)"]
+# tumor_volume_mean = pd.DataFrame(tumor_volume_mean)
+# tumor_volume_mean
+```
+
+
+```python
+# tumor_volume_sem = combined_df.groupby(["Drug", "Timepoint"]).sem()["Tumor Volume (mm3)"]
+# tumor_volume_sem = pd.DataFrame(tumor_volume_sem)
+# tumor_volume_sem.head()
+```
+
+
+```python
+Tumor_response_df = combined_df[["Drug", "Timepoint","Tumor Volume (mm3)"]]
+Tumor_response_df = Tumor_response_df.groupby(["Drug", "Timepoint"])["Tumor Volume (mm3)"].mean()
+Tumor_response_df = pd.DataFrame(Tumor_response_df)
+Tumor_response_df
+
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
     }
-   ],
-   "source": [
-    "tumor_response_pivot = Tumor_response_df.pivot_table(index = \"Timepoint\", columns = \"Drug\", values = \"Tumor Volume (mm3)\")\n",
-    "tumor_response_pivot.head()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 13,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/html": [
-       "<div>\n",
-       "<style scoped>\n",
-       "    .dataframe tbody tr th:only-of-type {\n",
-       "        vertical-align: middle;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe tbody tr th {\n",
-       "        vertical-align: top;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe thead th {\n",
-       "        text-align: right;\n",
-       "    }\n",
-       "</style>\n",
-       "<table border=\"1\" class=\"dataframe\">\n",
-       "  <thead>\n",
-       "    <tr style=\"text-align: right;\">\n",
-       "      <th>Drug</th>\n",
-       "      <th>Capomulin</th>\n",
-       "      <th>Ceftamin</th>\n",
-       "      <th>Infubinol</th>\n",
-       "      <th>Ketapril</th>\n",
-       "      <th>Naftisol</th>\n",
-       "      <th>Placebo</th>\n",
-       "      <th>Propriva</th>\n",
-       "      <th>Ramicane</th>\n",
-       "      <th>Stelasyn</th>\n",
-       "      <th>Zoniferol</th>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>Timepoint</th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "    </tr>\n",
-       "  </thead>\n",
-       "  <tbody>\n",
-       "    <tr>\n",
-       "      <th>0</th>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "      <td>0.898067</td>\n",
-       "    </tr>\n",
-       "  </tbody>\n",
-       "</table>\n",
-       "</div>"
-      ],
-      "text/plain": [
-       "Drug       Capomulin  Ceftamin  Infubinol  Ketapril  Naftisol   Placebo  \\\n",
-       "Timepoint                                                                 \n",
-       "0           0.898067  0.898067   0.898067  0.898067  0.898067  0.898067   \n",
-       "5           0.898067  0.898067   0.898067  0.898067  0.898067  0.898067   \n",
-       "10          0.898067  0.898067   0.898067  0.898067  0.898067  0.898067   \n",
-       "15          0.898067  0.898067   0.898067  0.898067  0.898067  0.898067   \n",
-       "20          0.898067  0.898067   0.898067  0.898067  0.898067  0.898067   \n",
-       "\n",
-       "Drug       Propriva  Ramicane  Stelasyn  Zoniferol  \n",
-       "Timepoint                                           \n",
-       "0          0.898067  0.898067  0.898067   0.898067  \n",
-       "5          0.898067  0.898067  0.898067   0.898067  \n",
-       "10         0.898067  0.898067  0.898067   0.898067  \n",
-       "15         0.898067  0.898067  0.898067   0.898067  \n",
-       "20         0.898067  0.898067  0.898067   0.898067  "
-      ]
-     },
-     "execution_count": 13,
-     "metadata": {},
-     "output_type": "execute_result"
+
+    .dataframe tbody tr th {
+        vertical-align: top;
     }
-   ],
-   "source": [
-    "tumor_response_pivot_sem = Tumor_response_df.pivot_table(index = \"Timepoint\", columns = \"Drug\", values = \"Volume SEM\")\n",
-    "tumor_response_pivot_sem.head()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 14,
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "# tumor_volume.plot[kind = \"scatter\", x = \"Time (Days)\", y = \"Tumor Valume (mm3)\", title = \"Tumor Response to Treatmanet\"]\n",
-    "# plt.show"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 15,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "image/png": "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\n",
-      "text/plain": [
-       "<matplotlib.figure.Figure at 0x10b2a0e10>"
-      ]
-     },
-     "metadata": {},
-     "output_type": "display_data"
+
+    .dataframe thead th {
+        text-align: right;
     }
-   ],
-   "source": [
-    "plt.errorbar(tumor_response_pivot.index, tumor_response_pivot[\"Capomulin\"], yerr=tumor_response_pivot_sem[\"Capomulin\"], color =\"r\", marker = \"o\", markersize=5, linestyle=\"--\", linewidth=0.5)\n",
-    "plt.errorbar(tumor_response_pivot.index, tumor_response_pivot[\"Infubinol\"], yerr=tumor_response_pivot_sem[\"Infubinol\"], color =\"b\", marker = \"+\", markersize=5, linestyle=\"--\", linewidth=0.5)\n",
-    "plt.errorbar(tumor_response_pivot.index, tumor_response_pivot[\"Ketapril\"], yerr=tumor_response_pivot_sem[\"Ketapril\"], color =\"g\", marker = \"*\", markersize=5, linestyle=\"--\", linewidth=0.5)\n",
-    "plt.errorbar(tumor_response_pivot.index, tumor_response_pivot[\"Placebo\"], yerr=tumor_response_pivot_sem[\"Placebo\"], color =\"y\", marker = \"^\", markersize=5, linestyle=\"--\", linewidth=0.5)\n",
-    "\n",
-    "x_lim = len(tumor_response_pivot.index)\n",
-    "plt.title(\"Tumor Response to Treatment\")\n",
-    "plt.xlabel(\"Time (Days)\")\n",
-    "plt.ylabel(\"Tumor Volume (mm3)\")\n",
-    "plt.show()"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "# Metastatic Response to Treatment\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 16,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/html": [
-       "<div>\n",
-       "<style scoped>\n",
-       "    .dataframe tbody tr th:only-of-type {\n",
-       "        vertical-align: middle;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe tbody tr th {\n",
-       "        vertical-align: top;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe thead th {\n",
-       "        text-align: right;\n",
-       "    }\n",
-       "</style>\n",
-       "<table border=\"1\" class=\"dataframe\">\n",
-       "  <thead>\n",
-       "    <tr style=\"text-align: right;\">\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th>Metastatic Sites</th>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>Drug</th>\n",
-       "      <th>Timepoint</th>\n",
-       "      <th></th>\n",
-       "    </tr>\n",
-       "  </thead>\n",
-       "  <tbody>\n",
-       "    <tr>\n",
-       "      <th rowspan=\"5\" valign=\"top\">Capomulin</th>\n",
-       "      <th>0</th>\n",
-       "      <td>0.000000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>0.160000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>0.320000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>0.375000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>0.652174</td>\n",
-       "    </tr>\n",
-       "  </tbody>\n",
-       "</table>\n",
-       "</div>"
-      ],
-      "text/plain": [
-       "                     Metastatic Sites\n",
-       "Drug      Timepoint                  \n",
-       "Capomulin 0                  0.000000\n",
-       "          5                  0.160000\n",
-       "          10                 0.320000\n",
-       "          15                 0.375000\n",
-       "          20                 0.652174"
-      ]
-     },
-     "execution_count": 16,
-     "metadata": {},
-     "output_type": "execute_result"
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th></th>
+      <th>Tumor Volume (mm3)</th>
+    </tr>
+    <tr>
+      <th>Drug</th>
+      <th>Timepoint</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th rowspan="10" valign="top">Capomulin</th>
+      <th>0</th>
+      <td>45.000000</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>44.266086</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>43.084291</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>42.064317</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>40.716325</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>39.939528</td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>38.769339</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>37.816839</td>
+    </tr>
+    <tr>
+      <th>40</th>
+      <td>36.958001</td>
+    </tr>
+    <tr>
+      <th>45</th>
+      <td>36.236114</td>
+    </tr>
+    <tr>
+      <th rowspan="10" valign="top">Ceftamin</th>
+      <th>0</th>
+      <td>45.000000</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>46.503051</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>48.285125</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>50.094055</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>52.157049</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>54.287674</td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>56.769517</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>58.827548</td>
+    </tr>
+    <tr>
+      <th>40</th>
+      <td>61.467895</td>
+    </tr>
+    <tr>
+      <th>45</th>
+      <td>64.132421</td>
+    </tr>
+    <tr>
+      <th rowspan="10" valign="top">Infubinol</th>
+      <th>0</th>
+      <td>45.000000</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>47.062001</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>49.403909</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>51.296397</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>53.197691</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>55.715252</td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>58.299397</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>60.742461</td>
+    </tr>
+    <tr>
+      <th>40</th>
+      <td>63.162824</td>
+    </tr>
+    <tr>
+      <th>45</th>
+      <td>65.755562</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <th>...</th>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th rowspan="10" valign="top">Ramicane</th>
+      <th>0</th>
+      <td>45.000000</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>43.944859</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>42.531957</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>41.495061</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>40.238325</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>38.974300</td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>38.703137</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>37.451996</td>
+    </tr>
+    <tr>
+      <th>40</th>
+      <td>36.574081</td>
+    </tr>
+    <tr>
+      <th>45</th>
+      <td>34.955595</td>
+    </tr>
+    <tr>
+      <th rowspan="10" valign="top">Stelasyn</th>
+      <th>0</th>
+      <td>45.000000</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>47.527452</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>49.463844</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>51.529409</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>54.067395</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>56.166123</td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>59.826738</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>62.440699</td>
+    </tr>
+    <tr>
+      <th>40</th>
+      <td>65.356386</td>
+    </tr>
+    <tr>
+      <th>45</th>
+      <td>68.438310</td>
+    </tr>
+    <tr>
+      <th rowspan="10" valign="top">Zoniferol</th>
+      <th>0</th>
+      <td>45.000000</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>46.851818</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>48.689881</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>50.779059</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>53.170334</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>55.432935</td>
+    </tr>
+    <tr>
+      <th>30</th>
+      <td>57.713531</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>60.089372</td>
+    </tr>
+    <tr>
+      <th>40</th>
+      <td>62.916692</td>
+    </tr>
+    <tr>
+      <th>45</th>
+      <td>65.960888</td>
+    </tr>
+  </tbody>
+</table>
+<p>100 rows × 1 columns</p>
+</div>
+
+
+
+
+```python
+Tumor_response_df["Volume SEM"] = Tumor_response_df["Tumor Volume (mm3)"].sem()
+
+Tumor_response_df = pd.DataFrame(Tumor_response_df)
+Tumor_response_df.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
     }
-   ],
-   "source": [
-    "metastatic_response_df = combined_df[[\"Drug\", \"Timepoint\",\"Metastatic Sites\"]]\n",
-    "metastatic_response_df = metastatic_response_df.groupby([\"Drug\", \"Timepoint\"])[\"Metastatic Sites\"].mean()\n",
-    "metastatic_response_df = pd.DataFrame(metastatic_response_df)\n",
-    "metastatic_response_df.head()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 17,
-   "metadata": {
-    "scrolled": true
-   },
-   "outputs": [
-    {
-     "data": {
-      "text/html": [
-       "<div>\n",
-       "<style scoped>\n",
-       "    .dataframe tbody tr th:only-of-type {\n",
-       "        vertical-align: middle;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe tbody tr th {\n",
-       "        vertical-align: top;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe thead th {\n",
-       "        text-align: right;\n",
-       "    }\n",
-       "</style>\n",
-       "<table border=\"1\" class=\"dataframe\">\n",
-       "  <thead>\n",
-       "    <tr style=\"text-align: right;\">\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th>Metastatic Sites</th>\n",
-       "      <th>Volume SEM</th>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>Drug</th>\n",
-       "      <th>Timepoint</th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "    </tr>\n",
-       "  </thead>\n",
-       "  <tbody>\n",
-       "    <tr>\n",
-       "      <th rowspan=\"5\" valign=\"top\">Capomulin</th>\n",
-       "      <th>0</th>\n",
-       "      <td>0.000000</td>\n",
-       "      <td>0.090044</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>0.160000</td>\n",
-       "      <td>0.090044</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>0.320000</td>\n",
-       "      <td>0.090044</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>0.375000</td>\n",
-       "      <td>0.090044</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>0.652174</td>\n",
-       "      <td>0.090044</td>\n",
-       "    </tr>\n",
-       "  </tbody>\n",
-       "</table>\n",
-       "</div>"
-      ],
-      "text/plain": [
-       "                     Metastatic Sites  Volume SEM\n",
-       "Drug      Timepoint                              \n",
-       "Capomulin 0                  0.000000    0.090044\n",
-       "          5                  0.160000    0.090044\n",
-       "          10                 0.320000    0.090044\n",
-       "          15                 0.375000    0.090044\n",
-       "          20                 0.652174    0.090044"
-      ]
-     },
-     "execution_count": 17,
-     "metadata": {},
-     "output_type": "execute_result"
+
+    .dataframe tbody tr th {
+        vertical-align: top;
     }
-   ],
-   "source": [
-    "metastatic_response_df[\"Volume SEM\"] = metastatic_response_df[\"Metastatic Sites\"].sem()\n",
-    "metastatic_response_df = pd.DataFrame(metastatic_response_df)\n",
-    "metastatic_response_df.head()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 18,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/html": [
-       "<div>\n",
-       "<style scoped>\n",
-       "    .dataframe tbody tr th:only-of-type {\n",
-       "        vertical-align: middle;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe tbody tr th {\n",
-       "        vertical-align: top;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe thead th {\n",
-       "        text-align: right;\n",
-       "    }\n",
-       "</style>\n",
-       "<table border=\"1\" class=\"dataframe\">\n",
-       "  <thead>\n",
-       "    <tr style=\"text-align: right;\">\n",
-       "      <th>Drug</th>\n",
-       "      <th>Capomulin</th>\n",
-       "      <th>Ceftamin</th>\n",
-       "      <th>Infubinol</th>\n",
-       "      <th>Ketapril</th>\n",
-       "      <th>Naftisol</th>\n",
-       "      <th>Placebo</th>\n",
-       "      <th>Propriva</th>\n",
-       "      <th>Ramicane</th>\n",
-       "      <th>Stelasyn</th>\n",
-       "      <th>Zoniferol</th>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>Timepoint</th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "    </tr>\n",
-       "  </thead>\n",
-       "  <tbody>\n",
-       "    <tr>\n",
-       "      <th>0</th>\n",
-       "      <td>0.000000</td>\n",
-       "      <td>0.000000</td>\n",
-       "      <td>0.000000</td>\n",
-       "      <td>0.000000</td>\n",
-       "      <td>0.000000</td>\n",
-       "      <td>0.000000</td>\n",
-       "      <td>0.000000</td>\n",
-       "      <td>0.000000</td>\n",
-       "      <td>0.000000</td>\n",
-       "      <td>0.000000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>0.160000</td>\n",
-       "      <td>0.380952</td>\n",
-       "      <td>0.280000</td>\n",
-       "      <td>0.304348</td>\n",
-       "      <td>0.260870</td>\n",
-       "      <td>0.375000</td>\n",
-       "      <td>0.320000</td>\n",
-       "      <td>0.120000</td>\n",
-       "      <td>0.240000</td>\n",
-       "      <td>0.166667</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>0.320000</td>\n",
-       "      <td>0.600000</td>\n",
-       "      <td>0.666667</td>\n",
-       "      <td>0.590909</td>\n",
-       "      <td>0.523810</td>\n",
-       "      <td>0.833333</td>\n",
-       "      <td>0.565217</td>\n",
-       "      <td>0.250000</td>\n",
-       "      <td>0.478261</td>\n",
-       "      <td>0.500000</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>0.375000</td>\n",
-       "      <td>0.789474</td>\n",
-       "      <td>0.904762</td>\n",
-       "      <td>0.842105</td>\n",
-       "      <td>0.857143</td>\n",
-       "      <td>1.250000</td>\n",
-       "      <td>0.764706</td>\n",
-       "      <td>0.333333</td>\n",
-       "      <td>0.782609</td>\n",
-       "      <td>0.809524</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>0.652174</td>\n",
-       "      <td>1.111111</td>\n",
-       "      <td>1.050000</td>\n",
-       "      <td>1.210526</td>\n",
-       "      <td>1.150000</td>\n",
-       "      <td>1.526316</td>\n",
-       "      <td>1.000000</td>\n",
-       "      <td>0.347826</td>\n",
-       "      <td>0.952381</td>\n",
-       "      <td>1.294118</td>\n",
-       "    </tr>\n",
-       "  </tbody>\n",
-       "</table>\n",
-       "</div>"
-      ],
-      "text/plain": [
-       "Drug       Capomulin  Ceftamin  Infubinol  Ketapril  Naftisol   Placebo  \\\n",
-       "Timepoint                                                                 \n",
-       "0           0.000000  0.000000   0.000000  0.000000  0.000000  0.000000   \n",
-       "5           0.160000  0.380952   0.280000  0.304348  0.260870  0.375000   \n",
-       "10          0.320000  0.600000   0.666667  0.590909  0.523810  0.833333   \n",
-       "15          0.375000  0.789474   0.904762  0.842105  0.857143  1.250000   \n",
-       "20          0.652174  1.111111   1.050000  1.210526  1.150000  1.526316   \n",
-       "\n",
-       "Drug       Propriva  Ramicane  Stelasyn  Zoniferol  \n",
-       "Timepoint                                           \n",
-       "0          0.000000  0.000000  0.000000   0.000000  \n",
-       "5          0.320000  0.120000  0.240000   0.166667  \n",
-       "10         0.565217  0.250000  0.478261   0.500000  \n",
-       "15         0.764706  0.333333  0.782609   0.809524  \n",
-       "20         1.000000  0.347826  0.952381   1.294118  "
-      ]
-     },
-     "execution_count": 18,
-     "metadata": {},
-     "output_type": "execute_result"
+
+    .dataframe thead th {
+        text-align: right;
     }
-   ],
-   "source": [
-    "metastatic_response_pivot = metastatic_response_df.pivot_table(index = \"Timepoint\", columns = \"Drug\", values = \"Metastatic Sites\")\n",
-    "metastatic_response_pivot.head()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 19,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "image/png": "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\n",
-      "text/plain": [
-       "<matplotlib.figure.Figure at 0x10b2b6f98>"
-      ]
-     },
-     "metadata": {},
-     "output_type": "display_data"
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th></th>
+      <th>Tumor Volume (mm3)</th>
+      <th>Volume SEM</th>
+    </tr>
+    <tr>
+      <th>Drug</th>
+      <th>Timepoint</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th rowspan="5" valign="top">Capomulin</th>
+      <th>0</th>
+      <td>45.000000</td>
+      <td>0.898067</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>44.266086</td>
+      <td>0.898067</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>43.084291</td>
+      <td>0.898067</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>42.064317</td>
+      <td>0.898067</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>40.716325</td>
+      <td>0.898067</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+tumor_response_pivot = Tumor_response_df.pivot_table(index = "Timepoint", columns = "Drug", values = "Tumor Volume (mm3)")
+tumor_response_pivot.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
     }
-   ],
-   "source": [
-    "plt.errorbar(metastatic_response_pivot.index, metastatic_response_pivot[\"Capomulin\"], yerr=tumor_response_pivot_sem[\"Capomulin\"], color =\"r\", marker = \"o\", markersize=5, linestyle=\"--\", linewidth=0.5)\n",
-    "plt.errorbar(metastatic_response_pivot.index, metastatic_response_pivot[\"Infubinol\"], yerr=tumor_response_pivot_sem[\"Infubinol\"], color =\"b\", marker = \"+\", markersize=5, linestyle=\"--\", linewidth=0.5)\n",
-    "plt.errorbar(metastatic_response_pivot.index, metastatic_response_pivot[\"Ketapril\"], yerr=tumor_response_pivot_sem[\"Ketapril\"], color =\"g\", marker = \"*\", markersize=5, linestyle=\"--\", linewidth=0.5)\n",
-    "plt.errorbar(metastatic_response_pivot.index, metastatic_response_pivot[\"Placebo\"], yerr=tumor_response_pivot_sem[\"Placebo\"], color =\"y\", marker = \"^\", markersize=5, linestyle=\"--\", linewidth=0.5)\n",
-    "\n",
-    "x_lim = len(tumor_response_pivot.index)\n",
-    "plt.title(\"Metastatic Response to Treatment\")\n",
-    "plt.xlabel(\"Time (Days)\")\n",
-    "plt.ylabel(\"Metastatic Sites\")\n",
-    "plt.show()"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "# Survival Rates"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 20,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/html": [
-       "<div>\n",
-       "<style scoped>\n",
-       "    .dataframe tbody tr th:only-of-type {\n",
-       "        vertical-align: middle;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe tbody tr th {\n",
-       "        vertical-align: top;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe thead th {\n",
-       "        text-align: right;\n",
-       "    }\n",
-       "</style>\n",
-       "<table border=\"1\" class=\"dataframe\">\n",
-       "  <thead>\n",
-       "    <tr style=\"text-align: right;\">\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th>Mouse ID</th>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>Drug</th>\n",
-       "      <th>Timepoint</th>\n",
-       "      <th></th>\n",
-       "    </tr>\n",
-       "  </thead>\n",
-       "  <tbody>\n",
-       "    <tr>\n",
-       "      <th rowspan=\"5\" valign=\"top\">Capomulin</th>\n",
-       "      <th>0</th>\n",
-       "      <td>25</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>25</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>25</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>24</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>23</td>\n",
-       "    </tr>\n",
-       "  </tbody>\n",
-       "</table>\n",
-       "</div>"
-      ],
-      "text/plain": [
-       "                     Mouse ID\n",
-       "Drug      Timepoint          \n",
-       "Capomulin 0                25\n",
-       "          5                25\n",
-       "          10               25\n",
-       "          15               24\n",
-       "          20               23"
-      ]
-     },
-     "execution_count": 20,
-     "metadata": {},
-     "output_type": "execute_result"
+
+    .dataframe tbody tr th {
+        vertical-align: top;
     }
-   ],
-   "source": [
-    "survival_rates_df = combined_df[[\"Drug\", \"Timepoint\",\"Mouse ID\"]]\n",
-    "survival_rates_df = survival_rates_df.groupby([\"Drug\", \"Timepoint\"])[\"Mouse ID\"].count()\n",
-    "survival_rates_df = pd.DataFrame(survival_rates_df)\n",
-    "survival_rates_df.head()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 21,
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    "#survival_rates_df[\"Volume SEM\"] = survival_rates_df[\"Mouse ID\"].sem()\n",
-    "#survival_rates_df = pd.DataFrame(survival_rates_df)\n",
-    "#survival_rates_df.head()\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 22,
-   "metadata": {
-    "scrolled": true
-   },
-   "outputs": [
-    {
-     "data": {
-      "text/html": [
-       "<div>\n",
-       "<style scoped>\n",
-       "    .dataframe tbody tr th:only-of-type {\n",
-       "        vertical-align: middle;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe tbody tr th {\n",
-       "        vertical-align: top;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe thead th {\n",
-       "        text-align: right;\n",
-       "    }\n",
-       "</style>\n",
-       "<table border=\"1\" class=\"dataframe\">\n",
-       "  <thead>\n",
-       "    <tr style=\"text-align: right;\">\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th>Mouse ID</th>\n",
-       "      <th>Volume SEM</th>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>Drug</th>\n",
-       "      <th>Timepoint</th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "    </tr>\n",
-       "  </thead>\n",
-       "  <tbody>\n",
-       "    <tr>\n",
-       "      <th rowspan=\"5\" valign=\"top\">Capomulin</th>\n",
-       "      <th>0</th>\n",
-       "      <td>25</td>\n",
-       "      <td>0.478596</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>25</td>\n",
-       "      <td>0.478596</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>25</td>\n",
-       "      <td>0.478596</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>24</td>\n",
-       "      <td>0.478596</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>23</td>\n",
-       "      <td>0.478596</td>\n",
-       "    </tr>\n",
-       "  </tbody>\n",
-       "</table>\n",
-       "</div>"
-      ],
-      "text/plain": [
-       "                     Mouse ID  Volume SEM\n",
-       "Drug      Timepoint                      \n",
-       "Capomulin 0                25    0.478596\n",
-       "          5                25    0.478596\n",
-       "          10               25    0.478596\n",
-       "          15               24    0.478596\n",
-       "          20               23    0.478596"
-      ]
-     },
-     "execution_count": 22,
-     "metadata": {},
-     "output_type": "execute_result"
+
+    .dataframe thead th {
+        text-align: right;
     }
-   ],
-   "source": [
-    "survival_rates_df[\"Volume SEM\"] = survival_rates_df[\"Mouse ID\"].sem()\n",
-    "survival_rates_df = pd.DataFrame(survival_rates_df)\n",
-    "survival_rates_df.head()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 23,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/html": [
-       "<div>\n",
-       "<style scoped>\n",
-       "    .dataframe tbody tr th:only-of-type {\n",
-       "        vertical-align: middle;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe tbody tr th {\n",
-       "        vertical-align: top;\n",
-       "    }\n",
-       "\n",
-       "    .dataframe thead th {\n",
-       "        text-align: right;\n",
-       "    }\n",
-       "</style>\n",
-       "<table border=\"1\" class=\"dataframe\">\n",
-       "  <thead>\n",
-       "    <tr style=\"text-align: right;\">\n",
-       "      <th>Drug</th>\n",
-       "      <th>Capomulin</th>\n",
-       "      <th>Ceftamin</th>\n",
-       "      <th>Infubinol</th>\n",
-       "      <th>Ketapril</th>\n",
-       "      <th>Naftisol</th>\n",
-       "      <th>Placebo</th>\n",
-       "      <th>Propriva</th>\n",
-       "      <th>Ramicane</th>\n",
-       "      <th>Stelasyn</th>\n",
-       "      <th>Zoniferol</th>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>Timepoint</th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "      <th></th>\n",
-       "    </tr>\n",
-       "  </thead>\n",
-       "  <tbody>\n",
-       "    <tr>\n",
-       "      <th>0</th>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>5</th>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>10</th>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>15</th>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "    </tr>\n",
-       "    <tr>\n",
-       "      <th>20</th>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "      <td>0.478596</td>\n",
-       "    </tr>\n",
-       "  </tbody>\n",
-       "</table>\n",
-       "</div>"
-      ],
-      "text/plain": [
-       "Drug       Capomulin  Ceftamin  Infubinol  Ketapril  Naftisol   Placebo  \\\n",
-       "Timepoint                                                                 \n",
-       "0           0.478596  0.478596   0.478596  0.478596  0.478596  0.478596   \n",
-       "5           0.478596  0.478596   0.478596  0.478596  0.478596  0.478596   \n",
-       "10          0.478596  0.478596   0.478596  0.478596  0.478596  0.478596   \n",
-       "15          0.478596  0.478596   0.478596  0.478596  0.478596  0.478596   \n",
-       "20          0.478596  0.478596   0.478596  0.478596  0.478596  0.478596   \n",
-       "\n",
-       "Drug       Propriva  Ramicane  Stelasyn  Zoniferol  \n",
-       "Timepoint                                           \n",
-       "0          0.478596  0.478596  0.478596   0.478596  \n",
-       "5          0.478596  0.478596  0.478596   0.478596  \n",
-       "10         0.478596  0.478596  0.478596   0.478596  \n",
-       "15         0.478596  0.478596  0.478596   0.478596  \n",
-       "20         0.478596  0.478596  0.478596   0.478596  "
-      ]
-     },
-     "execution_count": 23,
-     "metadata": {},
-     "output_type": "execute_result"
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Drug</th>
+      <th>Capomulin</th>
+      <th>Ceftamin</th>
+      <th>Infubinol</th>
+      <th>Ketapril</th>
+      <th>Naftisol</th>
+      <th>Placebo</th>
+      <th>Propriva</th>
+      <th>Ramicane</th>
+      <th>Stelasyn</th>
+      <th>Zoniferol</th>
+    </tr>
+    <tr>
+      <th>Timepoint</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>45.000000</td>
+      <td>45.000000</td>
+      <td>45.000000</td>
+      <td>45.000000</td>
+      <td>45.000000</td>
+      <td>45.000000</td>
+      <td>45.000000</td>
+      <td>45.000000</td>
+      <td>45.000000</td>
+      <td>45.000000</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>44.266086</td>
+      <td>46.503051</td>
+      <td>47.062001</td>
+      <td>47.389175</td>
+      <td>46.796098</td>
+      <td>47.125589</td>
+      <td>47.248967</td>
+      <td>43.944859</td>
+      <td>47.527452</td>
+      <td>46.851818</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>43.084291</td>
+      <td>48.285125</td>
+      <td>49.403909</td>
+      <td>49.582269</td>
+      <td>48.694210</td>
+      <td>49.423329</td>
+      <td>49.101541</td>
+      <td>42.531957</td>
+      <td>49.463844</td>
+      <td>48.689881</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>42.064317</td>
+      <td>50.094055</td>
+      <td>51.296397</td>
+      <td>52.399974</td>
+      <td>50.933018</td>
+      <td>51.359742</td>
+      <td>51.067318</td>
+      <td>41.495061</td>
+      <td>51.529409</td>
+      <td>50.779059</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>40.716325</td>
+      <td>52.157049</td>
+      <td>53.197691</td>
+      <td>54.920935</td>
+      <td>53.644087</td>
+      <td>54.364417</td>
+      <td>53.346737</td>
+      <td>40.238325</td>
+      <td>54.067395</td>
+      <td>53.170334</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+tumor_response_pivot_sem = Tumor_response_df.pivot_table(index = "Timepoint", columns = "Drug", values = "Volume SEM")
+tumor_response_pivot_sem.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
     }
-   ],
-   "source": [
-    "survival_rates_pivot = survival_rates_df.pivot_table(index = \"Timepoint\", columns = \"Drug\", values = \"Mouse ID\")\n",
-    "survival_rates_pivot\n",
-    "survival_rates_pivot_sem = survival_rates_df.pivot_table(index = \"Timepoint\", columns = \"Drug\", values = \"Volume SEM\")\n",
-    "survival_rates_pivot_sem.head()\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 24,
-   "metadata": {
-    "scrolled": true
-   },
-   "outputs": [
-    {
-     "data": {
-      "image/png": "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\n",
-      "text/plain": [
-       "<matplotlib.figure.Figure at 0x10b2ec9e8>"
-      ]
-     },
-     "metadata": {},
-     "output_type": "display_data"
+
+    .dataframe tbody tr th {
+        vertical-align: top;
     }
-   ],
-   "source": [
-    "plt.errorbar(survival_rates_pivot.index, survival_rates_pivot[\"Capomulin\"], yerr=tumor_response_pivot_sem[\"Capomulin\"], color =\"r\", marker = \"o\", markersize=5, linestyle=\"--\", linewidth=0.5)\n",
-    "plt.errorbar(survival_rates_pivot.index, survival_rates_pivot[\"Infubinol\"], yerr=tumor_response_pivot_sem[\"Infubinol\"], color =\"b\", marker = \"+\", markersize=5, linestyle=\"--\", linewidth=0.5)\n",
-    "plt.errorbar(survival_rates_pivot.index, survival_rates_pivot[\"Ketapril\"], yerr=tumor_response_pivot_sem[\"Ketapril\"], color =\"g\", marker = \"*\", markersize=5, linestyle=\"--\", linewidth=0.5)\n",
-    "plt.errorbar(survival_rates_pivot.index, survival_rates_pivot[\"Placebo\"], yerr=survival_rates_pivot_sem[\"Placebo\"], color =\"y\", marker = \"^\", markersize=5, linestyle=\"--\", linewidth=0.5)\n",
-    "\n",
-    "x_lim = len(tumor_response_pivot.index)\n",
-    "plt.title(\"Survival Rates to Treatment\")\n",
-    "plt.xlabel(\"Time (Days)\")\n",
-    "plt.ylabel(\"Mouse ID\")\n",
-    "plt.show()"
-   ]
-  },
-  {
-   "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "# Summary Bar Graph"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 25,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "Drug\n",
-       "Capomulin   -19.475303\n",
-       "Ceftamin     42.516492\n",
-       "Infubinol    46.123472\n",
-       "Ketapril     57.028795\n",
-       "Naftisol     53.923347\n",
-       "Placebo      51.297960\n",
-       "Propriva     47.241175\n",
-       "Ramicane    -22.320900\n",
-       "Stelasyn     52.085134\n",
-       "Zoniferol    46.579751\n",
-       "dtype: float64"
-      ]
-     },
-     "execution_count": 25,
-     "metadata": {},
-     "output_type": "execute_result"
+
+    .dataframe thead th {
+        text-align: right;
     }
-   ],
-   "source": [
-    "#Calculate the percentage change in tumor volume for each drug\n",
-    "tumor_volume_change_percentage =  ((tumor_response_pivot.iloc[-1]-tumor_response_pivot.iloc[0])/tumor_response_pivot.iloc[0]) * 100\n",
-    "tumor_volume_change_percentage"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 26,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "['Capomulin',\n",
-       " 'Ceftamin',\n",
-       " 'Infubinol',\n",
-       " 'Ketapril',\n",
-       " 'Naftisol',\n",
-       " 'Placebo',\n",
-       " 'Propriva',\n",
-       " 'Ramicane',\n",
-       " 'Stelasyn',\n",
-       " 'Zoniferol']"
-      ]
-     },
-     "execution_count": 26,
-     "metadata": {},
-     "output_type": "execute_result"
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Drug</th>
+      <th>Capomulin</th>
+      <th>Ceftamin</th>
+      <th>Infubinol</th>
+      <th>Ketapril</th>
+      <th>Naftisol</th>
+      <th>Placebo</th>
+      <th>Propriva</th>
+      <th>Ramicane</th>
+      <th>Stelasyn</th>
+      <th>Zoniferol</th>
+    </tr>
+    <tr>
+      <th>Timepoint</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+      <td>0.898067</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+# tumor_volume.plot[kind = "scatter", x = "Time (Days)", y = "Tumor Valume (mm3)", title = "Tumor Response to Treatmanet"]
+# plt.show
+```
+
+
+```python
+plt.errorbar(tumor_response_pivot.index, tumor_response_pivot["Capomulin"], yerr=tumor_response_pivot_sem["Capomulin"], color ="r", marker = "o", markersize=5, linestyle="--", linewidth=0.5)
+plt.errorbar(tumor_response_pivot.index, tumor_response_pivot["Infubinol"], yerr=tumor_response_pivot_sem["Infubinol"], color ="b", marker = "+", markersize=5, linestyle="--", linewidth=0.5)
+plt.errorbar(tumor_response_pivot.index, tumor_response_pivot["Ketapril"], yerr=tumor_response_pivot_sem["Ketapril"], color ="g", marker = "*", markersize=5, linestyle="--", linewidth=0.5)
+plt.errorbar(tumor_response_pivot.index, tumor_response_pivot["Placebo"], yerr=tumor_response_pivot_sem["Placebo"], color ="y", marker = "^", markersize=5, linestyle="--", linewidth=0.5)
+
+x_lim = len(tumor_response_pivot.index)
+plt.title("Tumor Response to Treatment")
+plt.xlabel("Time (Days)")
+plt.ylabel("Tumor Volume (mm3)")
+plt.show()
+```
+
+
+![png](output_10_0.png)
+
+
+# Metastatic Response to Treatment
+
+
+
+```python
+metastatic_response_df = combined_df[["Drug", "Timepoint","Metastatic Sites"]]
+metastatic_response_df = metastatic_response_df.groupby(["Drug", "Timepoint"])["Metastatic Sites"].mean()
+metastatic_response_df = pd.DataFrame(metastatic_response_df)
+metastatic_response_df.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
     }
-   ],
-   "source": [
-    "tumor_volume_change_percentage.index\n",
-    "drug = list(tumor_volume_change_percentage.index)\n",
-    "drug"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 27,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "[-19.475302667894155,\n",
-       " 42.516491855897414,\n",
-       " 46.12347172785184,\n",
-       " 57.02879468660604,\n",
-       " 53.923347134769195,\n",
-       " 51.29796048315153,\n",
-       " 47.24117486320634,\n",
-       " -22.32090046276666,\n",
-       " 52.085134287898995,\n",
-       " 46.57975086509522]"
-      ]
-     },
-     "execution_count": 27,
-     "metadata": {},
-     "output_type": "execute_result"
+
+    .dataframe tbody tr th {
+        vertical-align: top;
     }
-   ],
-   "source": [
-    "tumor_percent_change = list(tumor_volume_change_percentage.values)\n",
-    "tumor_percent_change"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 28,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "['g', 'r', 'r', 'r', 'r', 'r', 'r', 'g', 'r', 'r']"
-      ]
-     },
-     "execution_count": 28,
-     "metadata": {},
-     "output_type": "execute_result"
+
+    .dataframe thead th {
+        text-align: right;
     }
-   ],
-   "source": [
-    "colors = ['r' if tpc > 0 else 'g' for tpc in tumor_percent_change]\n",
-    "colors\n"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 29,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "text/plain": [
-       "array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])"
-      ]
-     },
-     "execution_count": 29,
-     "metadata": {},
-     "output_type": "execute_result"
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th></th>
+      <th>Metastatic Sites</th>
+    </tr>
+    <tr>
+      <th>Drug</th>
+      <th>Timepoint</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th rowspan="5" valign="top">Capomulin</th>
+      <th>0</th>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.160000</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>0.320000</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>0.375000</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>0.652174</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+metastatic_response_df["Volume SEM"] = metastatic_response_df["Metastatic Sites"].sem()
+metastatic_response_df = pd.DataFrame(metastatic_response_df)
+metastatic_response_df.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
     }
-   ],
-   "source": [
-    "x_axis = np.arange(len(tumor_percent_change))\n",
-    "x_axis"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": 30,
-   "metadata": {},
-   "outputs": [
-    {
-     "data": {
-      "image/png": "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\n",
-      "text/plain": [
-       "<matplotlib.figure.Figure at 0x114289eb8>"
-      ]
-     },
-     "metadata": {},
-     "output_type": "display_data"
+
+    .dataframe tbody tr th {
+        vertical-align: top;
     }
-   ],
-   "source": [
-    "#Bar chart\n",
-    "plt.bar(x_axis, tumor_percent_change, color = colors, align=\"edge\")\n",
-    "tick_locations = [value for value in x_axis]\n",
-    "plt.xticks(tick_locations, tumor_volume_change_percentage.index)\n",
-    "plt.xlim(0, len(x_axis))\n",
-    "plt.ylim(-20, max(tumor_volume_change_percentage.values))\n",
-    "plt.title(\"Tumor Change Over 45 Day Treatment\")\n",
-    "plt.xlabel(\"Drugs\")\n",
-    "plt.ylabel(\"% Tumor Volume Change\")\n",
-    "plt.savefig(\"% Tumor Volume Change\")\n",
-    "plt.show()"
-   ]
-  },
-  {
-   "cell_type": "code",
-   "execution_count": null,
-   "metadata": {},
-   "outputs": [],
-   "source": [
-    " Your objective is to analyze the data to show how four treatments \n",
-    "compare.\n",
-    "\n",
-    "\n",
-    "Creating a scatter plot that shows how the tumor volume changes over time for each treatment.\n",
-    "Creating a scatter plot that shows how the number of metastatic (cancer spreading) sites changes over time for each treatment.\n",
-    "Creating a scatter plot that shows the number of mice still alive through the course of treatment (Survival Rate)\n",
-    "Creating a bar graph that compares the total % tumor volume change for each drug across the full 45 days.\n",
-    "As final considerations:\n",
-    "\n",
-    "You must use the Pandas Library and the Jupyter Notebook.\n",
-    "You must use the Matplotlib and Seaborn libraries.\n",
-    "You must include a written description of three observable trends based on the data.\n",
-    "You must use proper labeling of your plots, including aspects like: Plot Titles, Axes Labels, Legend Labels, X and Y Axis Limits, etc.\n",
-    "Your scatter plots must include error bars. This will allow the company to account for variability between mice. You may want to look into pandas.DataFrame.sem for ideas on how to calculate this.\n",
-    "Remember when making your plots to consider aesthetics!\n",
-    "Your legends should not be overlaid on top of any data.\n",
-    "Your bar graph should indicate tumor redutumor growth as red and ction as green. It should also include a label with the percentage change for each bar. You may want to consult this tutorial for relevant code snippets.\n",
-    "You must include an exported markdown version of your Notebook called  README.md in your GitHub repository."
-   ]
-  }
- ],
- "metadata": {
-  "kernelspec": {
-   "display_name": "Python 3",
-   "language": "python",
-   "name": "python3"
-  },
-  "language_info": {
-   "codemirror_mode": {
-    "name": "ipython",
-    "version": 3
-   },
-   "file_extension": ".py",
-   "mimetype": "text/x-python",
-   "name": "python",
-   "nbconvert_exporter": "python",
-   "pygments_lexer": "ipython3",
-   "version": "3.6.4"
-  }
- },
- "nbformat": 4,
- "nbformat_minor": 2
-}
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th></th>
+      <th>Metastatic Sites</th>
+      <th>Volume SEM</th>
+    </tr>
+    <tr>
+      <th>Drug</th>
+      <th>Timepoint</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th rowspan="5" valign="top">Capomulin</th>
+      <th>0</th>
+      <td>0.000000</td>
+      <td>0.090044</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.160000</td>
+      <td>0.090044</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>0.320000</td>
+      <td>0.090044</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>0.375000</td>
+      <td>0.090044</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>0.652174</td>
+      <td>0.090044</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+metastatic_response_pivot = metastatic_response_df.pivot_table(index = "Timepoint", columns = "Drug", values = "Metastatic Sites")
+metastatic_response_pivot.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Drug</th>
+      <th>Capomulin</th>
+      <th>Ceftamin</th>
+      <th>Infubinol</th>
+      <th>Ketapril</th>
+      <th>Naftisol</th>
+      <th>Placebo</th>
+      <th>Propriva</th>
+      <th>Ramicane</th>
+      <th>Stelasyn</th>
+      <th>Zoniferol</th>
+    </tr>
+    <tr>
+      <th>Timepoint</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.160000</td>
+      <td>0.380952</td>
+      <td>0.280000</td>
+      <td>0.304348</td>
+      <td>0.260870</td>
+      <td>0.375000</td>
+      <td>0.320000</td>
+      <td>0.120000</td>
+      <td>0.240000</td>
+      <td>0.166667</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>0.320000</td>
+      <td>0.600000</td>
+      <td>0.666667</td>
+      <td>0.590909</td>
+      <td>0.523810</td>
+      <td>0.833333</td>
+      <td>0.565217</td>
+      <td>0.250000</td>
+      <td>0.478261</td>
+      <td>0.500000</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>0.375000</td>
+      <td>0.789474</td>
+      <td>0.904762</td>
+      <td>0.842105</td>
+      <td>0.857143</td>
+      <td>1.250000</td>
+      <td>0.764706</td>
+      <td>0.333333</td>
+      <td>0.782609</td>
+      <td>0.809524</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>0.652174</td>
+      <td>1.111111</td>
+      <td>1.050000</td>
+      <td>1.210526</td>
+      <td>1.150000</td>
+      <td>1.526316</td>
+      <td>1.000000</td>
+      <td>0.347826</td>
+      <td>0.952381</td>
+      <td>1.294118</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+plt.errorbar(metastatic_response_pivot.index, metastatic_response_pivot["Capomulin"], yerr=tumor_response_pivot_sem["Capomulin"], color ="r", marker = "o", markersize=5, linestyle="--", linewidth=0.5)
+plt.errorbar(metastatic_response_pivot.index, metastatic_response_pivot["Infubinol"], yerr=tumor_response_pivot_sem["Infubinol"], color ="b", marker = "+", markersize=5, linestyle="--", linewidth=0.5)
+plt.errorbar(metastatic_response_pivot.index, metastatic_response_pivot["Ketapril"], yerr=tumor_response_pivot_sem["Ketapril"], color ="g", marker = "*", markersize=5, linestyle="--", linewidth=0.5)
+plt.errorbar(metastatic_response_pivot.index, metastatic_response_pivot["Placebo"], yerr=tumor_response_pivot_sem["Placebo"], color ="y", marker = "^", markersize=5, linestyle="--", linewidth=0.5)
+
+x_lim = len(tumor_response_pivot.index)
+plt.title("Metastatic Response to Treatment")
+plt.xlabel("Time (Days)")
+plt.ylabel("Metastatic Sites")
+plt.show()
+```
+
+
+![png](output_15_0.png)
+
+
+# Survival Rates
+
+
+```python
+survival_rates_df = combined_df[["Drug", "Timepoint","Mouse ID"]]
+survival_rates_df = survival_rates_df.groupby(["Drug", "Timepoint"])["Mouse ID"].count()
+survival_rates_df = pd.DataFrame(survival_rates_df)
+survival_rates_df.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th></th>
+      <th>Mouse ID</th>
+    </tr>
+    <tr>
+      <th>Drug</th>
+      <th>Timepoint</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th rowspan="5" valign="top">Capomulin</th>
+      <th>0</th>
+      <td>25</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>25</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>25</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>24</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>23</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+#survival_rates_df["Volume SEM"] = survival_rates_df["Mouse ID"].sem()
+#survival_rates_df = pd.DataFrame(survival_rates_df)
+#survival_rates_df.head()
+
+```
+
+
+```python
+survival_rates_df["Volume SEM"] = survival_rates_df["Mouse ID"].sem()
+survival_rates_df = pd.DataFrame(survival_rates_df)
+survival_rates_df.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th></th>
+      <th>Mouse ID</th>
+      <th>Volume SEM</th>
+    </tr>
+    <tr>
+      <th>Drug</th>
+      <th>Timepoint</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th rowspan="5" valign="top">Capomulin</th>
+      <th>0</th>
+      <td>25</td>
+      <td>0.478596</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>25</td>
+      <td>0.478596</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>25</td>
+      <td>0.478596</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>24</td>
+      <td>0.478596</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>23</td>
+      <td>0.478596</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+survival_rates_pivot = survival_rates_df.pivot_table(index = "Timepoint", columns = "Drug", values = "Mouse ID")
+survival_rates_pivot
+survival_rates_pivot_sem = survival_rates_df.pivot_table(index = "Timepoint", columns = "Drug", values = "Volume SEM")
+survival_rates_pivot_sem.head()
+
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Drug</th>
+      <th>Capomulin</th>
+      <th>Ceftamin</th>
+      <th>Infubinol</th>
+      <th>Ketapril</th>
+      <th>Naftisol</th>
+      <th>Placebo</th>
+      <th>Propriva</th>
+      <th>Ramicane</th>
+      <th>Stelasyn</th>
+      <th>Zoniferol</th>
+    </tr>
+    <tr>
+      <th>Timepoint</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+      <td>0.478596</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+plt.errorbar(survival_rates_pivot.index, survival_rates_pivot["Capomulin"], yerr=tumor_response_pivot_sem["Capomulin"], color ="r", marker = "o", markersize=5, linestyle="--", linewidth=0.5)
+plt.errorbar(survival_rates_pivot.index, survival_rates_pivot["Infubinol"], yerr=tumor_response_pivot_sem["Infubinol"], color ="b", marker = "+", markersize=5, linestyle="--", linewidth=0.5)
+plt.errorbar(survival_rates_pivot.index, survival_rates_pivot["Ketapril"], yerr=tumor_response_pivot_sem["Ketapril"], color ="g", marker = "*", markersize=5, linestyle="--", linewidth=0.5)
+plt.errorbar(survival_rates_pivot.index, survival_rates_pivot["Placebo"], yerr=survival_rates_pivot_sem["Placebo"], color ="y", marker = "^", markersize=5, linestyle="--", linewidth=0.5)
+
+x_lim = len(tumor_response_pivot.index)
+plt.title("Survival Rates to Treatment")
+plt.xlabel("Time (Days)")
+plt.ylabel("Mouse ID")
+plt.show()
+```
+
+
+![png](output_21_0.png)
+
+
+# Summary Bar Graph
+
+
+```python
+#Calculate the percentage change in tumor volume for each drug
+tumor_volume_change_percentage =  ((tumor_response_pivot.iloc[-1]-tumor_response_pivot.iloc[0])/tumor_response_pivot.iloc[0]) * 100
+tumor_volume_change_percentage
+```
+
+
+
+
+    Drug
+    Capomulin   -19.475303
+    Ceftamin     42.516492
+    Infubinol    46.123472
+    Ketapril     57.028795
+    Naftisol     53.923347
+    Placebo      51.297960
+    Propriva     47.241175
+    Ramicane    -22.320900
+    Stelasyn     52.085134
+    Zoniferol    46.579751
+    dtype: float64
+
+
+
+
+```python
+tumor_volume_change_percentage.index
+drug = list(tumor_volume_change_percentage.index)
+drug
+```
+
+
+
+
+    ['Capomulin',
+     'Ceftamin',
+     'Infubinol',
+     'Ketapril',
+     'Naftisol',
+     'Placebo',
+     'Propriva',
+     'Ramicane',
+     'Stelasyn',
+     'Zoniferol']
+
+
+
+
+```python
+tumor_percent_change = list(tumor_volume_change_percentage.values)
+tumor_percent_change
+```
+
+
+
+
+    [-19.475302667894155,
+     42.516491855897414,
+     46.12347172785184,
+     57.02879468660604,
+     53.923347134769195,
+     51.29796048315153,
+     47.24117486320634,
+     -22.32090046276666,
+     52.085134287898995,
+     46.57975086509522]
+
+
+
+
+```python
+colors = ['r' if tpc > 0 else 'g' for tpc in tumor_percent_change]
+colors
+
+```
+
+
+
+
+    ['g', 'r', 'r', 'r', 'r', 'r', 'r', 'g', 'r', 'r']
+
+
+
+
+```python
+x_axis = np.arange(len(tumor_percent_change))
+x_axis
+```
+
+
+
+
+    array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+
+
+
+
+```python
+#Bar chart
+plt.bar(x_axis, tumor_percent_change, color = colors, align="edge")
+tick_locations = [value for value in x_axis]
+plt.xticks(tick_locations, tumor_volume_change_percentage.index)
+plt.xlim(0, len(x_axis))
+plt.ylim(-20, max(tumor_volume_change_percentage.values))
+plt.title("Tumor Change Over 45 Day Treatment")
+plt.xlabel("Drugs")
+plt.ylabel("% Tumor Volume Change")
+plt.savefig("% Tumor Volume Change")
+plt.show()
+```
+
+
+![png](output_28_0.png)
+
+
+
+```python
+ Your objective is to analyze the data to show how four treatments 
+compare.
+
+
+Creating a scatter plot that shows how the tumor volume changes over time for each treatment.
+Creating a scatter plot that shows how the number of metastatic (cancer spreading) sites changes over time for each treatment.
+Creating a scatter plot that shows the number of mice still alive through the course of treatment (Survival Rate)
+Creating a bar graph that compares the total % tumor volume change for each drug across the full 45 days.
+As final considerations:
+
+You must use the Pandas Library and the Jupyter Notebook.
+You must use the Matplotlib and Seaborn libraries.
+You must include a written description of three observable trends based on the data.
+You must use proper labeling of your plots, including aspects like: Plot Titles, Axes Labels, Legend Labels, X and Y Axis Limits, etc.
+Your scatter plots must include error bars. This will allow the company to account for variability between mice. You may want to look into pandas.DataFrame.sem for ideas on how to calculate this.
+Remember when making your plots to consider aesthetics!
+Your legends should not be overlaid on top of any data.
+Your bar graph should indicate tumor redutumor growth as red and ction as green. It should also include a label with the percentage change for each bar. You may want to consult this tutorial for relevant code snippets.
+You must include an exported markdown version of your Notebook called  README.md in your GitHub repository.
+```
+
+
+      File "<ipython-input-26-92a754469614>", line 1
+        Your objective is to analyze the data to show how four treatments
+                     ^
+    SyntaxError: invalid syntax
+
+
